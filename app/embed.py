@@ -2,12 +2,17 @@
 
 import numpy as np
 import json
+import os
 
-# Load precomputed embeddings
-def load_embeddings():
-    return np.load("app/data/embeddings.npy")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load metadata
+def load_embeddings():
+    path = os.path.join(BASE_DIR, "data/embeddings.npy")
+    return np.load(path)
+
+# Load precomputed embeddings
 def load_metadata():
-    with open("app/data/metadata.json") as f:
+    path = os.path.join(BASE_DIR, "data/metadata.json")
+    with open(path) as f:
         return json.load(f)
