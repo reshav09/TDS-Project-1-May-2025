@@ -1,15 +1,15 @@
-# TDS Virtual TA (Vercel Deployment)
+# TDS Virtual TA (Railway Deployment)
 
 This project implements a RAG-based virtual TA for the IITM TDS course, combining course content and Discourse posts.
 
 ## Deployment
 
 - Built with Flask and OpenAI API (via AIProxy)
-- Hosted on Vercel using `vercel-python`
+- Hosted on Railway.com using `Dockerfile`
 
 ## Environment Variables
 
-- `AIPROXY_TOKEN` — required (set via Vercel's Environment Variables UI)
+- `AIPROXY_TOKEN` — required (set via Railway's Environment Variables UI)
 
 ## Endpoints
 
