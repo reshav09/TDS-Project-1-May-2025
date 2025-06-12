@@ -5,9 +5,9 @@ import json
 
 # Load precomputed embeddings
 def load_embeddings():
-    return np.load("data/embeddings.npy")
+    return np.load("app/data/embeddings.npy")
 
 # Load metadata
 def load_metadata():
-    with open("data/metadata.json") as f:
+    with open("app/data/metadata.json") as f:
         return json.load(f)
