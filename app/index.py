@@ -7,10 +7,14 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 load_dotenv()
 
-@app.route("/api", methods=["POST"])
+@app.route("/api", methods=["GET", "POST"])
 def api():
-    data = request.get_json()
-    question = data.get("question")
+    if request.method == "POST":
+        data = request.get_json()
+        question = data.get("question")
+    elif request.method == "GET":
+        question = request.args.get("q")
+    
     if not question:
         return jsonify({"error": "Question is required."}), 400
 
