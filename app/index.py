@@ -21,9 +21,7 @@ def api():
 def health_check():
     return jsonify({"message": "TDS Virtual TA API is running!"})
 
-
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5000))  # railway assigns PORT dynamically
     app.run(host="0.0.0.0", port=port)
-
