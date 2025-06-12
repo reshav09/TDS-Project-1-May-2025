@@ -1,57 +1,46 @@
-#Reshav Sharma-2025-TDS-PROJECT 1: tds_virtual_ta/rag_pipeline.py
+# Reshav Sharma-2025-TDS-PROJECT 1: tds_virtual_ta/rag_pipeline.py
 
 import os
 import json
 import re
 import glob
-from bs4 import BeautifulSoup
-from openai import OpenAI
-import faiss
 import numpy as np
-from datetime import datetime
-from typing import List
+from openai import OpenAI
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# OpenAI client with AI Proxy
 client = OpenAI(
     api_key=os.environ.get("AIPROXY_TOKEN"),
     base_url="https://aiproxy.sanand.workers.dev/openai/v1"
 )
 
-# Constants
 CHUNK_SIZE = 500
 OVERLAP = 50
 EMBED_DIM = 1536
 
-# === CLEANING FUNCTIONS ===
-
-def clean_html(md_text: str) -> str:
-    # Remove markdown links and bolds
+def clean_html(md_text):
     text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', md_text)
     text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-    text = re.sub(r'#+ ', '', text)  # Remove headers
+    text = re.sub(r'#+ ', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def clean_discourse_html(html_text: str) -> str:
-    # Convert cooked HTML to plain text
+def clean_discourse_html(html_text):
     soup = BeautifulSoup(html_text, "html.parser")
     text = soup.get_text(separator=" ").strip()
     text = re.sub(r'\s+', ' ', text)
     return text
 
-def chunk_text(text: str, chunk_size=CHUNK_SIZE, overlap=OVERLAP) -> List[str]:
+def chunk_text(text):
     words = text.split()
     chunks = []
-    for i in range(0, len(words), chunk_size - overlap):
-        chunk = " ".join(words[i:i + chunk_size])
+    for i in range(0, len(words), CHUNK_SIZE - OVERLAP):
+        chunk = " ".join(words[i:i + CHUNK_SIZE])
         chunks.append(chunk)
     return chunks
-
-# === LOADING FUNCTIONS ===
 
 def load_course_pages(course_path="data/scrape_pages.json"):
     with open(course_path) as f:
@@ -72,20 +61,17 @@ def load_discourse_posts(discourse_dir="discourse_raw_json/"):
                 })
     return discourse_pages
 
-# === EMBEDDING + VECTOR STORE ===
-
-def get_embeddings(text_chunks: List[str]):
+def get_embeddings(text_chunks):
     response = client.embeddings.create(
         model="text-embedding-3-small",
         input=text_chunks
     )
     return [np.array(e.embedding, dtype='float32') for e in response.data]
 
-def build_vector_store(course_pages, discourse_pages, index_path="vector_store.faiss", meta_path="data/metadata.json"):
+def build_vector_store(course_pages, discourse_pages):
     all_chunks = []
     metadata = []
 
-    # Process course content
     for page in course_pages:
         clean_text = clean_html(page['content'])
         chunks = chunk_text(clean_text)
@@ -94,10 +80,10 @@ def build_vector_store(course_pages, discourse_pages, index_path="vector_store.f
             metadata.append({
                 "title": page["title"],
                 "source": page["source"],
-                "chunk": chunk
+                "chunk": chunk,
+                "source_type": "course"
             })
 
-    # Process discourse content
     for post in discourse_pages:
         chunks = chunk_text(post['content'])
         for chunk in chunks:
@@ -105,34 +91,26 @@ def build_vector_store(course_pages, discourse_pages, index_path="vector_store.f
             metadata.append({
                 "title": post["title"],
                 "source": post["source"],
-                "chunk": chunk
+                "chunk": chunk,
+                "source_type": "discourse"
             })
 
-    print(f"Total chunks to embed: {len(all_chunks)}")
+    print(f"Total chunks: {len(all_chunks)}")
 
-    # Embed in batches to avoid token limits
-    batch_size = 1000  # adjust for safety
+    batch_size = 1000
     vectors = []
-
     for i in range(0, len(all_chunks), batch_size):
-        batch = all_chunks[i:i+batch_size]
+        batch = all_chunks[i:i + batch_size]
         embeddings = get_embeddings(batch)
         vectors.extend(embeddings)
 
     vectors = np.array(vectors, dtype='float32')
+    np.save("data/embeddings.npy", vectors)
 
-    # Build FAISS index
-    index = faiss.IndexFlatL2(EMBED_DIM)
-    index.add(vectors)
-    faiss.write_index(index, index_path)
-
-    os.makedirs(os.path.dirname(meta_path), exist_ok=True)
-    with open(meta_path, 'w') as f:
+    with open("data/metadata.json", 'w') as f:
         json.dump(metadata, f, indent=2)
 
-    print("✅ Vector store built and metadata saved.")
-
-# === ENTRY POINT ===
+    print("✅ Vector store saved.")
 
 if __name__ == "__main__":
     course_pages = load_course_pages()

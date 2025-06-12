@@ -1,13 +1,9 @@
 # Reshav Sharma-2025-TDS-PROJECT 1: tds_virtual_ta/rag.py
 
 import numpy as np
-from embed import load_index, load_metadata, embed_text
+from embed import load_embeddings, load_metadata
 from openai import OpenAI
 import os
-import base64
-from PIL import Image
-import pytesseract
-from io import BytesIO
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,53 +13,44 @@ client = OpenAI(
     base_url="https://aiproxy.sanand.workers.dev/openai/v1"
 )
 
-index = load_index()
+embeddings = load_embeddings()
 metadata = load_metadata()
 
-# OCR helper (optional image processing)
-def extract_text_from_image(image_b64):
-    try:
-        image = Image.open(BytesIO(base64.b64decode(image_b64)))
-        return pytesseract.image_to_string(image)
-    except Exception as e:
-        return ""
+def embed_text(text):
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=[text]
+    )
+    return np.array(response.data[0].embedding, dtype='float32')
 
-# Retrieve top_k relevant chunks from FAISS index
 def retrieve_relevant_chunks(query_embedding, top_k=5):
-    D, I = index.search(np.array([query_embedding]), top_k)
-    results = []
-    sources = []
+    distances = np.linalg.norm(embeddings - query_embedding, axis=1)
+    top_k_idx = distances.argsort()[:top_k]
 
-    for i in I[0]:
-        if i < len(metadata):
-            m = metadata[i]
-            source_type = m.get("source_type", "course")  # default is course page
+    results, sources = [], []
 
-            if source_type == "course":
-                chunk_text = f"- {m['chunk']} (Source: {m['source']})"
-                link = {"url": m["source"], "text": m["chunk"][:80] + "..."}
-            elif source_type == "discourse":
-                full_url = "https://discourse.onlinedegree.iitm.ac.in" + m["post_url"]
-                chunk_text = f"- {m['chunk']} (Post by {m['author']}: {full_url})"
-                link = {"url": full_url, "text": m["chunk"][:80] + "..."}
-            else:
-                chunk_text = f"- {m['chunk']} (Source unknown)"
-                link = {"url": "", "text": m["chunk"][:80] + "..."}
+    for i in top_k_idx:
+        m = metadata[i]
+        source_type = m.get("source_type", "course")
 
-            results.append(chunk_text)
-            sources.append(link)
+        if source_type == "course":
+            chunk_text = f"- {m['chunk']} (Source: {m['source']})"
+            link = {"url": m["source"], "text": m["chunk"][:80] + "..."}
+        elif source_type == "discourse":
+            full_url = m["source"]
+            chunk_text = f"- {m['chunk']} (Post: {full_url})"
+            link = {"url": full_url, "text": m["chunk"][:80] + "..."}
+        else:
+            chunk_text = f"- {m['chunk']} (Unknown Source)"
+            link = {"url": "", "text": m["chunk"][:80] + "..."}
+
+        results.append(chunk_text)
+        sources.append(link)
 
     return results, sources
 
-# Main RAG answer pipeline
-def answer_question(question, image_b64=None):
-    if image_b64:
-        ocr_text = extract_text_from_image(image_b64)
-        full_query = f"{question}\nImage context: {ocr_text}"
-    else:
-        full_query = question
-
-    query_embedding = embed_text(full_query)
+def answer_question(question):
+    query_embedding = embed_text(question)
     relevant_chunks, links = retrieve_relevant_chunks(query_embedding)
 
     prompt = f"""
@@ -87,6 +74,4 @@ Always include helpful explanations, but only based on the context provided. Inc
         ]
     )
 
-    answer_text = response.choices[0].message.content.strip()
-
-    return answer_text, links
+    return response.choices[0].message.content.strip(), links
