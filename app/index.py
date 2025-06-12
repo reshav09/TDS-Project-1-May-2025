@@ -1,5 +1,6 @@
 # Reshav Sharma-2025-TDS-PROJECT 1: tds_virtual_ta/index.py
 
+import os
 from flask import Flask, request, jsonify
 from rag import answer_question
 from dotenv import load_dotenv
@@ -25,3 +26,7 @@ def api():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port)
