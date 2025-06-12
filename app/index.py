@@ -3,9 +3,11 @@
 from flask import Flask, request, jsonify
 from rag import answer_question
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 app = Flask(__name__)
 load_dotenv()
+CORS(app)
 
 @app.route("/api", methods=["GET", "POST"])
 def api():
