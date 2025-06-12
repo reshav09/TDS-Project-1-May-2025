@@ -1,4 +1,0 @@
-{
-  "buildCommand": "docker build -t tds-virtual-ta .",
-  "startCommand": "python app/index.py"
-}
