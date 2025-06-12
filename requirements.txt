@@ -1,11 +1,10 @@
 # project 1: tds_virtual_ta/requirements.txt
-Flask
-python-dotenv
-faiss-cpu
-numpy
+flask
 openai
+faiss-cpu
+pillow
 pytesseract
-Pillow
-beautifulsoup4
-tqdm
+python-dotenv
+numpy
+bs4
 
