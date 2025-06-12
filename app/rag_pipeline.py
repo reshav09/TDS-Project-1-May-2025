@@ -42,11 +42,11 @@ def chunk_text(text):
         chunks.append(chunk)
     return chunks
 
-def load_course_pages(course_path="data/scrape_pages.json"):
+def load_course_pages(course_path="app/data/scrape_pages.json"):
     with open(course_path) as f:
         return json.load(f)
 
-def load_discourse_posts(discourse_dir="discourse_raw_json/"):
+def load_discourse_posts(discourse_dir="app/discourse_raw_json/"):
     discourse_pages = []
     for file in glob.glob(os.path.join(discourse_dir, "topic_*.json")):
         with open(file) as f:
@@ -105,9 +105,9 @@ def build_vector_store(course_pages, discourse_pages):
         vectors.extend(embeddings)
 
     vectors = np.array(vectors, dtype='float32')
-    np.save("data/embeddings.npy", vectors)
+    np.save("app/data/embeddings.npy", vectors)
 
-    with open("data/metadata.json", 'w') as f:
+    with open("app/data/metadata.json", 'w') as f:
         json.dump(metadata, f, indent=2)
 
     print("✅ Vector store saved.")
