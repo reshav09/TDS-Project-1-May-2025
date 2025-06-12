@@ -1,5 +1,4 @@
 {
   "buildCommand": "docker build -t tds-virtual-ta .",
-  "startCommand": "flask run --host=0.0.0.0 --port=8000"
+  "startCommand": "python app/index.py"
 }
-
