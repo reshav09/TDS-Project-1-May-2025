@@ -9,4 +9,3 @@ python-dotenv
 numpy
 bs4
 gunicorn
-
