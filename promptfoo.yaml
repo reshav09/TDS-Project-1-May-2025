@@ -1,9 +1,14 @@
 description: "TDS Virtual TA Project Sample (but not the actual evaluation) Questions"
 
+headers:
+  Content-Type: application/json
+  Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IjIzZjIwMDU0MzBAZHMuc3R1ZHkuaWl0bS5hYy5pbiJ9.SpS5YVhwofHWk6aC9mEuFxc8eX8PecslYZpXzcMEa0M
+
+
 providers:
   - id: https
     config:
-      url: https://app.example.com/api/ # Replace this with your API endpoint
+      url: http://localhost:5000/api # Replace this with your API endpoint
       method: POST
       headers:
         Content-Type: application/json
